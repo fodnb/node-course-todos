@@ -67,7 +67,7 @@ describe('POST /todos', () => {
   });// ends it
 });
 
-////////////////////////////////////////////////////////////////////////////////////
+///////////   GET ROUTES   /////////////////////////////////////////////////////////////////////////
 
 describe('GET /todos', ()=>{
 	it('should get all todos', (done)=> {
@@ -75,18 +75,11 @@ describe('GET /todos', ()=>{
 		.get('/todos')
 		.expect(200)
 		.expect((res)=>{
-			expect(res.body.todos.length).toBe(2)
+			expect(res.body.todos.length).toBe(2);
 		})
 		.end(done);
-	})
-})
-
-
-
-
-
-
-
+	});
+});
 
 
 
@@ -96,11 +89,30 @@ describe('get /todos/:id', ()=>{
 		.get(`/todos/${todos[0]._id.toHexString()}`)
 		.expect(200)
 		.expect((res)=>{
-			console.log(todos[0]._id.toHexString());
-			console.log(res.body);	
 			expect(res.body.todo.text).toBe(todos[0].text);
 		})
 		.end(done);
+	});
+
+	it('should return a 404 if todo is not found', (done)=>{
+		//make sure you get a 404 back
+		const testObjectID = new ObjectID().toHexString();
+
+		request(app)
+		.get(`/todos/${testObjectID}`)
+		.expect(404)
+		.end(done);
+	});
+
+	it('should return a 404 for non ObjectID', (done)=>{
+		// /todos/123
+		const failId = "59efaa62efe4942df00dc75d";
+
+		request(app)
+		.get(`/todos/${failId}`)
+		.expect(404)
+		.end(done);
+
 	});
 
 });

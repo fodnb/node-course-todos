@@ -25,9 +25,8 @@ app.post("/todos", (req, res)=>{
 		console.log('saved new todo', todo.text);
 	},(e)=>{
 		res.status(400).send(e);
-	})
-
-})
+	});
+});
 
 
 app.get('/todos', (req, res)=> {
@@ -49,51 +48,19 @@ app.get('/todos/:id', (req, res)=> {
 		
 	Todo.findById(id).then((todo)=>{
 		if(!todo){
-			res.status(404).send();
-		}		
-		if(todo){
-			res.send({todo});
-		}
+			return res.status(404).send();
+		}	
+		res.send({todo});
 	});
 
 },(e)=>{
-
 	res.status(400).send(e);
-
-})
+});
 
 
 var server = app.listen(PORT, ()=>{
 	console.log(`App listening on Port: ${PORT}`)
-})
+});
 
 
 module.exports = {app};
-
-
-
-
-// var newTodo = new Todo({
-// 	text: "cook dinner"
-// });
-
-// newTodo.save().then((doc)=>{
-// 	console.log('saved todo', doc);		
-// 	},(e)=>{
-// 	console.log("unable to save todo");
-// });
-
-
-
-
-
-
-// // var newUser = new User({
-// // 	email: "dmcghee@alliance.com"
-// // });
-
-// // newUser.save().then((doc)=> {
-// // 	console.log('saved User\n', JSON.stringify(doc, undefined, 2));
-// // },(e)=>{
-// // 	console.log("couldn't save user", e);
-// // });
