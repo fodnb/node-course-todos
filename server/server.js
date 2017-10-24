@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 
 // for /todo's to create new todo
 app.post("/todos", (req, res)=>{
-	console.log(req.body.text);
+	// console.log(req.body.text);
 	var todo = new Todo({text: req.body.text});
 
 	todo.save().then((doc)=>{
@@ -28,6 +28,16 @@ app.post("/todos", (req, res)=>{
 	})
 
 })
+
+
+app.get('/todos', (req, res)=> {
+	Todo.find().then((todos)=>{
+		res.status(200).send({todos});
+	}, (e) =>{
+		res.status(400).send(e);
+	});
+});
+
 
 
 app.get('/todos/:id', (req, res)=> {
