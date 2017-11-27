@@ -2,6 +2,7 @@ require('./config/config');
 const {mongoose} = require("./db/mongoose");
 const {Todo} = require('./models/todo');
 const {User} = require('./models/user');
+const {authenticate} = require('./middleware/authenticate');
 const _ = require('lodash');
 const bcrypt = require('bcryptjs');
 
@@ -147,22 +148,19 @@ app.post('/users/login', (req, res) => {
 		});
 });
 
-app.get('/users/me', (req, res)=> {
-
-	var token = req.header('x-auth');
-
-	User.findByToken(token).then((user)=> {
-
-		if(!user){
-			return Promise.reject();
-		}
-		// console.log(user.toJSON());	
-		res.send(user.toJSON());
-
-	}).catch((e)=>{
-		res.status(401).send();
-	});
+app.get('/users/me', authenticate, (req, res)=> {
+	res.send(req.user);	
 });
+
+app.delete('/users/me/token', authenticate, (req, res) => {
+	req.user.removeToken(req.token).then(()=>{
+		res.status(200).send();
+	}, ()=> {
+		res.status(400).send();
+	})
+})
+
+
 
 var server = app.listen(PORT, ()=>{
 	console.log(`App listening on Port: ${PORT}`)
