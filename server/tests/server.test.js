@@ -2,28 +2,24 @@ const expect = require('expect');
 const request = require('supertest');
 
 const {app} = require('./../server');
+const {User} = require('./../models/user');
 const {Todo} = require('./../models/todo');
 const {ObjectID} = require('mongodb');
 
+const {populateTodos, populateUsers, users, todos} = require('./seed/seed');
 
+// const todos = [{
+// 	_id: new ObjectID(),
+// 	text: 'first test todo'
+// },{
+// 	_id: new ObjectID(),
+// 	text: 'second test todo',
+// 	completed: true,
+// 	completedAt: 513
+// }]
 
-const todos = [{
-	_id: new ObjectID(),
-	text: 'first test todo'
-},{
-	_id: new ObjectID(),
-	text: 'second test todo',
-	completed: true,
-	completedAt: 513
-}]
-
-
-beforeEach((done) => {
-  Todo.remove({}).then(() => {
-  return Todo.insertMany(todos);	
-}).then(()=> done());
-  
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
   it('should create a new todo', (done) => {
@@ -205,9 +201,52 @@ describe('PATCH /todos/:id', ()=>{
 
 });
 
+describe('Post /users/login', ()=>{
+
+		it('should login user and return auth token', (done)=> {
+				request(app)
+				.post('/users/login')
+				.send({
+					email: users[1].email,
+					password: users[1].password
+				})
+				.expect(200)
+				.expect((res)=>{
+					expect(res.headers['x-auth']).toExist;
+				})
+				.end((err,res)=>{
+					if(err){
+						return done(err);
+					}
+					User.findById(users[1]._id).then((user)=>{
+						expect(user.tokens[0].token).toEqual(res.headers['x-auth']);
+						expect(user.tokens[0].access).toEqual('auth');
+						done();
+					}).catch((e)=> done(e));	
+
+				});
+
+		});
+
+		it('should reject invalid login',(done)=>{
+			// 400 token to not exist and tokens array to be 0
+
+			request(app)
+			.post('/users/login')
+			.send({password: 'password'})
+			.expect(400)
+			.expect((res)=>{
+				expect(res.headers['x-auth']).toNotExist;
+				})
+			.end((err,res)=>{
+
+				User.findOne({password: res.password}).then((user)=>{
+					expect(user).toNotExist;
+					done();
+				}).catch((e)=> done(e));	
 
 
+			});
 
-
-
-
+});
+});

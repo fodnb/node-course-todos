@@ -3,6 +3,7 @@ const {mongoose} = require("./db/mongoose");
 const {Todo} = require('./models/todo');
 const {User} = require('./models/user');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -24,7 +25,7 @@ app.post("/todos", (req, res)=>{
 
 	todo.save().then((doc)=>{
 		res.send(doc);
-		console.log('saved new todo', todo.text);
+		// console.log('saved new todo', todo.text);
 	},(e)=>{
 		res.status(400).send(e);
 	});
@@ -129,6 +130,23 @@ app.post('/users', (req, res) => {
 	});	
 });
 
+
+app.post('/users/login', (req, res) => {
+		var body = _.pick(req.body, ['email', 'password']);
+
+
+		User.findByCredentials(body.email, body.password).then((user)=>{
+			return user.generateAuthToken().then((token)=>{
+					 res.header('x-auth', token).send(user);
+
+			})
+		
+			// console.log(user);	
+		}).catch((e)=>{
+			res.status(400).send();
+		});
+});
+
 app.get('/users/me', (req, res)=> {
 
 	var token = req.header('x-auth');
@@ -138,7 +156,7 @@ app.get('/users/me', (req, res)=> {
 		if(!user){
 			return Promise.reject();
 		}
-		console.log(user.toJSON());	
+		// console.log(user.toJSON());	
 		res.send(user.toJSON());
 
 	}).catch((e)=>{
