@@ -27,6 +27,7 @@ describe('POST /todos', () => {
 
     request(app)
       .post('/todos')
+      .set('x-auth', users[0].tokens[0].token)
       .send({text})
       .expect(200)
       .expect((res) => {
@@ -51,6 +52,7 @@ describe('POST /todos', () => {
 
   	request(app)
   	.post('/todos')
+    .set('x-auth', users[0].tokens[0].token)
   	.expect(400)
   	.send({})
   	.end((err, res)=>{
@@ -71,9 +73,10 @@ describe('GET /todos', ()=>{
 	it('should get all todos', (done)=> {
 		request(app)
 		.get('/todos')
+		.set('x-auth', users[0].tokens[0].token)
 		.expect(200)
 		.expect((res)=>{
-			expect(res.body.todos.length).toBe(2);
+			expect(res.body.todos.length).toBe(1);
 		})
 		.end(done);
 	});
@@ -85,6 +88,7 @@ describe('get /todos/:id', ()=>{
 	it('should return todo doc', (done)=>{
 		request(app)
 		.get(`/todos/${todos[0]._id.toHexString()}`)
+		.set('x-auth', users[0].tokens[0].token)
 		.expect(200)
 		.expect((res)=>{
 			expect(res.body.todo.text).toBe(todos[0].text);
@@ -98,6 +102,7 @@ describe('get /todos/:id', ()=>{
 
 		request(app)
 		.get(`/todos/${testObjectID}`)
+		.set('x-auth', users[0].tokens[0].token)
 		.expect(404)
 		.end(done);
 	});
@@ -108,6 +113,14 @@ describe('get /todos/:id', ()=>{
 
 		request(app)
 		.get(`/todos/${failId}`)
+		.set('x-auth', users[0].tokens[0].token)
+		.expect(404)
+		.end(done);
+	});
+		it('should not return todo doc created by other user', (done)=>{
+		request(app)
+		.get(`/todos/${todos[1]._id.toHexString()}`)
+		.set('x-auth', users[0].tokens[0].token)
 		.expect(404)
 		.end(done);
 	});
@@ -219,7 +232,7 @@ describe('Post /users/login', ()=>{
 						return done(err);
 					}
 					User.findById(users[1]._id).then((user)=>{
-						expect(user.tokens[0].token).toEqual(res.headers['x-auth']);
+						expect(user.tokens[1].token).toEqual(res.headers['x-auth']);
 						expect(user.tokens[0].access).toEqual('auth');
 						done();
 					}).catch((e)=> done(e));	
@@ -233,15 +246,20 @@ describe('Post /users/login', ()=>{
 
 			request(app)
 			.post('/users/login')
-			.send({password: 'password'})
+			.send({
+				password: users[1].password + "1",
+				email: users[1].email
+			})
 			.expect(400)
 			.expect((res)=>{
 				expect(res.headers['x-auth']).toNotExist;
 				})
 			.end((err,res)=>{
-
-				User.findOne({password: res.password}).then((user)=>{
-					expect(user).toNotExist;
+				if(err){
+					return done(err);
+				}
+				User.findById(users[1]._id).then((user)=>{
+					expect(user.tokens.length).toBe(1);
 					done();
 				}).catch((e)=> done(e));	
 
